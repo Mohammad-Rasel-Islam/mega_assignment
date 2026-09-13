@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../providers/category_provider.dart';
 import '../providers/menu_item_provider.dart';
+import '../providers/favorite_provider.dart';
+import '../providers/cart_provider.dart';
 import '../providers/auth_provider.dart';
 import '../utils/constants.dart';
 import '../widgets/category_pill.dart';

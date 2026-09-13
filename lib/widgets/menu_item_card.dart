@@ -76,7 +76,7 @@ class MenuItemCard extends StatelessWidget {
                       top: 8,
                       right: 8,
                       child: GestureDetector(
-                        onTap: () => favProv.toggleFavorite(item.id),
+                        onTap: () => favProv.toggleFavorite(item.id, menuItem: item),
                         child: Container(
                           width: 32,
                           height: 32,

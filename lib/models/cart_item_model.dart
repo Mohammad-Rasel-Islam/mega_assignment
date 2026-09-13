@@ -21,17 +21,20 @@ class CartItemModel {
   });
 
   factory CartItemModel.fromJson(Map<String, dynamic> json) {
-    final mData = json['menu_item'] ?? json['product'];
+    final rawMData = json['menu_item'] ?? json['product'];
+    final Map<String, dynamic>? mData =
+        rawMData is Map ? Map<String, dynamic>.from(rawMData) : null;
+
     return CartItemModel(
-      id: json['id'] as int? ?? 0,
-      menuItemId: json['menu_item_id'] as int? ?? json['product_id'] as int? ?? 0,
-      color: json['color'] as String? ?? '',
-      size: json['size'] as String? ?? '',
-      quantity: json['quantity'] as int? ?? 1,
-      price: double.tryParse(json['price'].toString()) ?? 0.0,
-      menuItem: mData != null
-          ? MenuItemModel.fromJson(mData as Map<String, dynamic>)
-          : null,
+      id: int.tryParse(json['id']?.toString() ?? '') ?? 0,
+      menuItemId: int.tryParse(
+              (json['menu_item_id'] ?? json['product_id'])?.toString() ?? '') ??
+          0,
+      color: json['color']?.toString() ?? '',
+      size: json['size']?.toString() ?? '',
+      quantity: int.tryParse(json['quantity']?.toString() ?? '') ?? 1,
+      price: double.tryParse(json['price']?.toString() ?? '0.0') ?? 0.0,
+      menuItem: mData != null ? MenuItemModel.fromJson(mData) : null,
     );
   }
 

@@ -3,7 +3,7 @@ import '../models/cart_item_model.dart';
 import '../services/api_service.dart';
 import '../utils/constants.dart';
 
-/// Manages the shopping cart state, synced with Laravel API.
+/// Manages the shopping cart state, synced with REST API.
 class CartProvider with ChangeNotifier {
   final ApiService _api;
 
@@ -41,10 +41,12 @@ class CartProvider with ChangeNotifier {
     notifyListeners();
     try {
       final response = await _api.get(ApiEndpoints.cart);
-      final list = response as List<dynamic>;
-      _cartItems = list
-          .map((j) => CartItemModel.fromJson(j as Map<String, dynamic>))
-          .toList();
+      if (response is List) {
+        _cartItems = response
+            .whereType<Map>()
+            .map((j) => CartItemModel.fromJson(Map<String, dynamic>.from(j)))
+            .toList();
+      }
     } catch (e) {
       _error = e is ApiException ? e.message : e.toString();
     } finally {
@@ -66,16 +68,22 @@ class CartProvider with ChangeNotifier {
       final response = await _api.post(
         ApiEndpoints.cart,
         data: {
+          'menu_item_id': productId,
           'product_id': productId,
           'color': color,
           'size': size,
           'quantity': quantity,
         },
       );
-      // Add the returned item to local state for immediate UI update
-      final newItem =
-          CartItemModel.fromJson(response as Map<String, dynamic>);
-      _cartItems.add(newItem);
+      if (response is Map) {
+        final newItem = CartItemModel.fromJson(Map<String, dynamic>.from(response));
+        final idx = _cartItems.indexWhere((i) => i.menuItemId == productId);
+        if (idx != -1) {
+          _cartItems[idx] = newItem;
+        } else {
+          _cartItems.add(newItem);
+        }
+      }
       notifyListeners();
       return true;
     } catch (e) {
@@ -93,7 +101,6 @@ class CartProvider with ChangeNotifier {
       await removeItem(cartItemId);
       return;
     }
-    // Optimistic update
     final idx = _cartItems.indexWhere((i) => i.id == cartItemId);
     if (idx != -1) {
       _cartItems[idx] = _cartItems[idx].copyWith(quantity: newQuantity);
@@ -105,7 +112,6 @@ class CartProvider with ChangeNotifier {
         data: {'quantity': newQuantity},
       );
     } catch (e) {
-      // Roll back on failure by re-fetching
       await fetchCart();
     }
   }
@@ -114,7 +120,6 @@ class CartProvider with ChangeNotifier {
 
   /// DELETE /api/cart/{id} — optimistic local remove.
   Future<void> removeItem(int cartItemId) async {
-    // Optimistic remove
     final removed = _cartItems.where((i) => i.id == cartItemId).toList();
     _cartItems.removeWhere((i) => i.id == cartItemId);
     notifyListeners();
@@ -122,7 +127,6 @@ class CartProvider with ChangeNotifier {
     try {
       await _api.delete(ApiEndpoints.cartItem(cartItemId));
     } catch (e) {
-      // Roll back
       _cartItems.addAll(removed);
       notifyListeners();
     }

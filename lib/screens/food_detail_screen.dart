@@ -159,7 +159,7 @@ class _FoodDetailScreenState extends State<FoodDetailScreen>
                         top: MediaQuery.of(context).padding.top + 8,
                         right: 16,
                         child: _CircleButton(
-                          onTap: () => favProv.toggleFavorite(item.id),
+                          onTap: () => favProv.toggleFavorite(item.id, menuItem: item),
                           child: AnimatedSwitcher(
                             duration: const Duration(milliseconds: 200),
                             child: Icon(

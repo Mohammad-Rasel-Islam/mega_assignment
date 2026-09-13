@@ -13,13 +13,16 @@ class FavoriteItemModel {
   });
 
   factory FavoriteItemModel.fromJson(Map<String, dynamic> json) {
-    final mData = json['menu_item'] ?? json['product'];
+    final rawMData = json['menu_item'] ?? json['product'];
+    final Map<String, dynamic>? mData =
+        rawMData is Map ? Map<String, dynamic>.from(rawMData) : null;
+
     return FavoriteItemModel(
-      id: json['id'] as int? ?? 0,
-      menuItemId: json['menu_item_id'] as int? ?? json['product_id'] as int? ?? 0,
-      menuItem: mData != null
-          ? MenuItemModel.fromJson(mData as Map<String, dynamic>)
-          : null,
+      id: int.tryParse(json['id']?.toString() ?? '') ?? 0,
+      menuItemId: int.tryParse(
+              (json['menu_item_id'] ?? json['product_id'])?.toString() ?? '') ??
+          0,
+      menuItem: mData != null ? MenuItemModel.fromJson(mData) : null,
     );
   }
 

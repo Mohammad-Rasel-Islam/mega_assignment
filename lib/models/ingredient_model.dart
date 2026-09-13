@@ -18,12 +18,12 @@ class IngredientModel {
 
   factory IngredientModel.fromJson(Map<String, dynamic> json) {
     return IngredientModel(
-      id: json['id'] as int? ?? 0,
-      menuItemId: json['menu_item_id'] as int? ?? 0,
+      id: int.tryParse(json['id']?.toString() ?? '') ?? 0,
+      menuItemId: int.tryParse(json['menu_item_id']?.toString() ?? '') ?? 0,
       ingredientName: json['ingredient_name'] as String? ?? '',
       imageUrl: json['image_url'] as String? ?? '',
-      quantityGm: json['quantity_gm'] as int? ?? 50,
-      baseServings: json['base_servings'] as int? ?? 1,
+      quantityGm: int.tryParse(json['quantity_gm']?.toString() ?? '') ?? 50,
+      baseServings: int.tryParse(json['base_servings']?.toString() ?? '') ?? 1,
     );
   }
 

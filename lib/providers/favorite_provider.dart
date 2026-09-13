@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/favorite_item_model.dart';
+import '../models/menu_item_model.dart';
 import '../services/api_service.dart';
 import '../utils/constants.dart';
 
@@ -33,11 +34,13 @@ class FavoriteProvider with ChangeNotifier {
     notifyListeners();
     try {
       final response = await _api.get(ApiEndpoints.favorites);
-      final list = response as List<dynamic>;
-      _items = list
-          .map((j) => FavoriteItemModel.fromJson(j as Map<String, dynamic>))
-          .toList();
-      _favoriteIds = _items.map((i) => i.menuItemId).toSet();
+      if (response is List) {
+        _items = response
+            .whereType<Map>()
+            .map((j) => FavoriteItemModel.fromJson(Map<String, dynamic>.from(j)))
+            .toList();
+        _favoriteIds = _items.map((i) => i.menuItemId).toSet();
+      }
     } catch (e) {
       _error = e is ApiException ? e.message : e.toString();
     } finally {
@@ -50,12 +53,12 @@ class FavoriteProvider with ChangeNotifier {
 
   // ── Toggle ─────────────────────────────────────────────────────────────
 
-  /// Toggle favorite status with optimistic update.
-  Future<void> toggleFavorite(int menuItemId) async {
+  /// Toggle favorite status with optimistic update and full model preservation.
+  Future<void> toggleFavorite(int menuItemId, {MenuItemModel? menuItem}) async {
     if (isFavorite(menuItemId)) {
       final existingItem = _items.firstWhere(
         (i) => i.menuItemId == menuItemId,
-        orElse: () => FavoriteItemModel(id: 0, menuItemId: menuItemId),
+        orElse: () => FavoriteItemModel(id: 0, menuItemId: menuItemId, menuItem: menuItem),
       );
 
       _favoriteIds.remove(menuItemId);
@@ -65,7 +68,7 @@ class FavoriteProvider with ChangeNotifier {
       try {
         await _api.delete(ApiEndpoints.favoriteItem(menuItemId));
       } catch (e) {
-        if (existingItem.id != 0) {
+        if (existingItem.id != 0 || menuItem != null) {
           _favoriteIds.add(menuItemId);
           _items.add(existingItem);
           notifyListeners();
@@ -73,25 +76,39 @@ class FavoriteProvider with ChangeNotifier {
       }
     } else {
       _favoriteIds.add(menuItemId);
+      final tempFav = FavoriteItemModel(
+        id: 0,
+        menuItemId: menuItemId,
+        menuItem: menuItem,
+      );
+      _items.removeWhere((i) => i.menuItemId == menuItemId);
+      _items.add(tempFav);
       notifyListeners();
 
       try {
         final response = await _api.post(
           ApiEndpoints.favorites,
-          data: {'menu_item_id': menuItemId},
+          data: {
+            'menu_item_id': menuItemId,
+            'product_id': menuItemId,
+          },
         );
-        final newItem =
-            FavoriteItemModel.fromJson(response as Map<String, dynamic>);
-        _items.add(newItem);
+        if (response is Map) {
+          final newItem = FavoriteItemModel.fromJson(Map<String, dynamic>.from(response));
+          _items.removeWhere((i) => i.menuItemId == menuItemId);
+          _items.add(newItem.menuItem != null ? newItem : tempFav);
+        }
         notifyListeners();
       } catch (e) {
         _favoriteIds.remove(menuItemId);
+        _items.removeWhere((i) => i.menuItemId == menuItemId);
         notifyListeners();
       }
     }
   }
 
-  Future<void> toggleWishlist(int id) => toggleFavorite(id);
+  Future<void> toggleWishlist(int id, {MenuItemModel? product}) =>
+      toggleFavorite(id, menuItem: product);
 
   /// Explicitly remove by ID with re-sync on failure.
   Future<void> removeById(int favoriteId, int menuItemId) async {

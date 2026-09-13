@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../models/menu_item_model.dart';
 import '../providers/favorite_provider.dart';
 import '../providers/menu_item_provider.dart';
 import '../utils/constants.dart';
 import '../widgets/menu_item_card.dart';
 import '../widgets/shimmer_loading.dart';
+import 'main_wrapper_screen.dart';
 
 class WishlistScreen extends StatefulWidget {
   const WishlistScreen({Key? key}) : super(key: key);
@@ -199,8 +201,12 @@ class _EmptyFavourites extends StatelessWidget {
           const SizedBox(height: 28),
           ElevatedButton.icon(
             onPressed: () {
-              // Navigate to home (index 0)
-              // We find the closest MainWrapperScreen and switch tabs
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => const MainWrapperScreen(initialIndex: 0)),
+                (route) => false,
+              );
             },
             icon: const Icon(Icons.restaurant_menu_rounded),
             label: const Text('Explore Menu'),

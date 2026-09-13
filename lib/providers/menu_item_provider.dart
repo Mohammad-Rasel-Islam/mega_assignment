@@ -40,10 +40,12 @@ class MenuItemProvider with ChangeNotifier {
         queryParameters: queryParams,
       );
 
-      final list = response as List<dynamic>;
-      _menuItems = list
-          .map((j) => MenuItemModel.fromJson(j as Map<String, dynamic>))
-          .toList();
+      if (response is List) {
+        _menuItems = response
+            .whereType<Map>()
+            .map((j) => MenuItemModel.fromJson(Map<String, dynamic>.from(j)))
+            .toList();
+      }
     } catch (e) {
       _error = e is ApiException ? e.message : e.toString();
     } finally {
@@ -60,8 +62,10 @@ class MenuItemProvider with ChangeNotifier {
         return _menuItems[idx];
       }
       final response = await _api.get(ApiEndpoints.menuItemById(id));
-      final item = MenuItemModel.fromJson(response as Map<String, dynamic>);
-      return item;
+      if (response is Map) {
+        return MenuItemModel.fromJson(Map<String, dynamic>.from(response));
+      }
+      return null;
     } catch (_) {
       return null;
     }

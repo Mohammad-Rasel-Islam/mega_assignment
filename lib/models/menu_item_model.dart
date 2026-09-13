@@ -33,29 +33,36 @@ class MenuItemModel {
   factory MenuItemModel.fromJson(Map<String, dynamic> json) {
     final rawIngs = json['ingredients'] as List<dynamic>? ?? [];
     final ingredients = rawIngs
-        .map((i) => IngredientModel.fromJson(i as Map<String, dynamic>))
+        .whereType<Map>()
+        .map((i) => IngredientModel.fromJson(Map<String, dynamic>.from(i)))
         .toList();
 
-    String img = json['image_url'] as String? ?? '';
+    String img = json['image_url']?.toString() ?? '';
     if (img.isEmpty) {
       final rawImages = json['product_images'] as List<dynamic>? ?? [];
       if (rawImages.isNotEmpty) {
-        img = rawImages.first['image_url']?.toString() ?? '';
+        final firstImg = rawImages.first;
+        if (firstImg is Map) {
+          img = firstImg['image_url']?.toString() ?? '';
+        }
       }
     }
 
+    final rawPopular = json['is_popular'];
+    final isPopular = rawPopular == true || rawPopular == 1 || rawPopular == '1';
+
     return MenuItemModel(
-      id: json['id'] as int? ?? 0,
-      name: json['name'] as String? ?? '',
-      description: json['description'] as String? ?? '',
-      price: double.tryParse(json['price'].toString()) ?? 0.0,
+      id: int.tryParse(json['id']?.toString() ?? '') ?? 0,
+      name: json['name']?.toString() ?? '',
+      description: json['description']?.toString() ?? '',
+      price: double.tryParse(json['price']?.toString() ?? '0.0') ?? 0.0,
       imageUrl: img,
-      categoryId: json['category_id'] as int? ?? 0,
-      calories: json['calories'] as int? ?? 350,
-      prepTimeMinutes: json['prep_time_minutes'] as int? ?? 15,
+      categoryId: int.tryParse(json['category_id']?.toString() ?? '') ?? 0,
+      calories: int.tryParse(json['calories']?.toString() ?? '') ?? 350,
+      prepTimeMinutes: int.tryParse(json['prep_time_minutes']?.toString() ?? '') ?? 15,
       rating: double.tryParse(json['rating']?.toString() ?? '4.5') ?? 4.5,
-      reviewCount: json['review_count'] as int? ?? 100,
-      isPopular: json['is_popular'] as bool? ?? false,
+      reviewCount: int.tryParse(json['review_count']?.toString() ?? '') ?? 100,
+      isPopular: isPopular,
       ingredients: ingredients,
     );
   }
