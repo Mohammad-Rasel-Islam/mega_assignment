@@ -16,143 +16,172 @@ class CustomBottomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 75,
+      height: 72,
       decoration: BoxDecoration(
-        color: AppColors.cardBackground,
+        color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 16,
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 20,
             offset: const Offset(0, -4),
           ),
         ],
       ),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              // 0: Categories
-              _buildNavItem(
-                index: 0,
-                icon: Icons.grid_view_rounded,
-                label: 'Categories',
-              ),
-
-              // 1: Wishlist
-              _buildNavItem(
-                index: 1,
-                icon: Icons.favorite_rounded,
-                label: 'Wishlist',
-              ),
-
-              // 2: Placeholder space for Center Home FAB
-              const SizedBox(width: 50),
-
-              // 3: Cart with badge
-              Consumer<CartProvider>(
-                builder: (context, cartProvider, child) {
-                  final cartCount = cartProvider.totalItemCount;
-                  return Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      _buildNavItem(
-                        index: 3,
-                        icon: Icons.shopping_bag_rounded,
-                        label: 'Cart',
-                      ),
-                      if (cartCount > 0)
-                        Positioned(
-                          top: 6,
-                          right: 12,
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(
-                              color: AppColors.primary,
-                              shape: BoxShape.circle,
-                            ),
-                            constraints: const BoxConstraints(
-                              minWidth: 18,
-                              minHeight: 18,
-                            ),
-                            child: Text(
-                              '$cartCount',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
+      child: SafeArea(
+        top: false,
+        child: Row(
+          children: [
+            _NavItem(
+              index: 0,
+              currentIndex: currentIndex,
+              icon: Icons.home_rounded,
+              iconOutlined: Icons.home_outlined,
+              label: 'Home',
+              onTap: onTap,
+            ),
+            _NavItem(
+              index: 1,
+              currentIndex: currentIndex,
+              icon: Icons.favorite_rounded,
+              iconOutlined: Icons.favorite_border_rounded,
+              label: 'Favourites',
+              onTap: onTap,
+            ),
+            // Cart with badge
+            Expanded(
+              child: Consumer<CartProvider>(
+                builder: (context, cartProvider, _) {
+                  final count = cartProvider.totalItemCount;
+                  return GestureDetector(
+                    onTap: () => onTap(2),
+                    behavior: HitTestBehavior.opaque,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: currentIndex == 2
+                                    ? AppColors.primary
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(12),
                               ),
-                              textAlign: TextAlign.center,
+                              child: Icon(
+                                currentIndex == 2
+                                    ? Icons.shopping_bag_rounded
+                                    : Icons.shopping_bag_outlined,
+                                size: 24,
+                                color: currentIndex == 2
+                                    ? Colors.white
+                                    : AppColors.textSecondary,
+                              ),
                             ),
+                            if (count > 0)
+                              Positioned(
+                                top: -2,
+                                right: -4,
+                                child: Container(
+                                  padding: const EdgeInsets.all(3),
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.accentYellow,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  constraints: const BoxConstraints(
+                                    minWidth: 17,
+                                    minHeight: 17,
+                                  ),
+                                  child: Text(
+                                    '$count',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          'Cart',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: currentIndex == 2
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                            color: currentIndex == 2
+                                ? AppColors.primary
+                                : AppColors.textSecondary,
                           ),
                         ),
-                    ],
+                      ],
+                    ),
                   );
                 },
               ),
-
-              // 4: Profile
-              _buildNavItem(
-                index: 4,
-                icon: Icons.person_rounded,
-                label: 'Profile',
-              ),
-            ],
-          ),
-
-          // Center Elevated Circular Orange Home Button
-          Positioned(
-            top: -20,
-            child: GestureDetector(
-              onTap: () => onTap(2),
-              child: Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primary.withOpacity(0.4),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Icon(
-                  Icons.home_rounded,
-                  color: Colors.white,
-                  size: 28,
-                ),
-              ),
             ),
-          ),
-        ],
+            _NavItem(
+              index: 3,
+              currentIndex: currentIndex,
+              icon: Icons.person_rounded,
+              iconOutlined: Icons.person_outline_rounded,
+              label: 'Profile',
+              onTap: onTap,
+            ),
+          ],
+        ),
       ),
     );
   }
+}
 
-  Widget _buildNavItem({
-    required int index,
-    required IconData icon,
-    required String label,
-  }) {
+class _NavItem extends StatelessWidget {
+  final int index;
+  final int currentIndex;
+  final IconData icon;
+  final IconData iconOutlined;
+  final String label;
+  final ValueChanged<int> onTap;
+
+  const _NavItem({
+    required this.index,
+    required this.currentIndex,
+    required this.icon,
+    required this.iconOutlined,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     final isSelected = currentIndex == index;
-    return GestureDetector(
-      onTap: () => onTap(index),
-      behavior: HitTestBehavior.opaque,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => onTap(index),
+        behavior: HitTestBehavior.opaque,
         child: Column(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              icon,
-              size: 24,
-              color: isSelected ? AppColors.primary : AppColors.textSecondary,
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: isSelected ? AppColors.primaryLight : Colors.transparent,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                isSelected ? icon : iconOutlined,
+                size: 24,
+                color: isSelected ? AppColors.primary : AppColors.textSecondary,
+              ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 3),
             Text(
               label,
               style: TextStyle(

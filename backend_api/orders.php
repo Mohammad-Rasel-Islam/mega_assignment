@@ -1,5 +1,6 @@
 <?php
 require_once 'db.php';
+require_once 'menu_items.php';
 
 $user = getAuthUser($pdo);
 $userId = $user['id'];
@@ -40,9 +41,9 @@ if ($method === 'POST') {
 
     // Fetch cart items
     $cartStmt = $pdo->prepare("
-        SELECT c.*, p.name, p.price 
+        SELECT c.*, m.name, m.price 
         FROM cart_items c 
-        JOIN products p ON c.product_id = p.id 
+        JOIN menu_items m ON c.menu_item_id = m.id 
         WHERE c.user_id = ?
     ");
     $cartStmt->execute([$userId]);
@@ -67,9 +68,9 @@ if ($method === 'POST') {
     $orderId = (int)$pdo->lastInsertId();
 
     // Insert Order Items
-    $itemStmt = $pdo->prepare("INSERT INTO order_items (order_id, product_id, quantity, price, color, size) VALUES (?, ?, ?, ?, ?, ?)");
+    $itemStmt = $pdo->prepare("INSERT INTO order_items (order_id, menu_item_id, quantity, price, color, size) VALUES (?, ?, ?, ?, ?, ?)");
     foreach ($cartItems as $ci) {
-        $itemStmt->execute([$orderId, $ci['product_id'], $ci['quantity'], $ci['price'], $ci['color'], $ci['size']]);
+        $itemStmt->execute([$orderId, $ci['menu_item_id'], $ci['quantity'], $ci['price'], $ci['color'], $ci['size']]);
     }
 
     // Clear user's cart
@@ -94,9 +95,9 @@ function formatOrder($pdo, $order) {
 
     // Items
     $itemStmt = $pdo->prepare("
-        SELECT oi.*, p.name 
+        SELECT oi.*, m.name 
         FROM order_items oi 
-        JOIN products p ON oi.product_id = p.id 
+        JOIN menu_items m ON oi.menu_item_id = m.id 
         WHERE oi.order_id = ?
     ");
     $itemStmt->execute([$orderId]);
@@ -104,24 +105,22 @@ function formatOrder($pdo, $order) {
 
     $items = [];
     foreach ($rawItems as $ri) {
-        $pid = (int)$ri['product_id'];
-        $imgStmt = $pdo->prepare("SELECT image_url FROM product_images WHERE product_id = ? LIMIT 1");
-        $imgStmt->execute([$pid]);
-        $img = $imgStmt->fetchColumn() ?: '';
+        $mId = (int)$ri['menu_item_id'];
+        $menuStmt = $pdo->prepare("SELECT * FROM menu_items WHERE id = ?");
+        $menuStmt->execute([$mId]);
+        $menuItemData = $menuStmt->fetch();
+        $menuItem = $menuItemData ? formatMenuItem($pdo, $menuItemData) : null;
 
         $items[] = [
             'id' => (int)$ri['id'],
-            'product_id' => $pid,
+            'menu_item_id' => $mId,
+            'product_id' => $mId,
             'quantity' => (int)$ri['quantity'],
             'price' => (float)$ri['price'],
             'color' => $ri['color'],
             'size' => $ri['size'],
-            'product' => [
-                'id' => $pid,
-                'name' => $ri['name'],
-                'price' => (float)$ri['price'],
-                'product_images' => [['image_url' => $img]]
-            ]
+            'menu_item' => $menuItem,
+            'product' => $menuItem
         ];
     }
 

@@ -102,7 +102,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final addressProvider = context.watch<AddressProvider>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Checkout')),
+      appBar: AppBar(
+        title: const Text('Checkout'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -113,7 +119,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  'Delivery Address',
+                  '📍 Delivery Address',
                   style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -185,7 +191,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
             // ── Order Summary ────────────────────────────────────────
             const Text(
-              'Order Summary',
+              '🧾 Order Summary',
               style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -275,8 +281,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
             // ── Place Order Button ────────────────────────────────────
             CustomButton(
-              text:
-                  'Place Order (${PriceFormatter.format(cartProvider.total)})',
+              text: 'Place Order • ${PriceFormatter.format(cartProvider.total)}',
+              icon: Icons.delivery_dining_rounded,
               isLoading: _isPlacingOrder,
               onPressed: _handlePlaceOrder,
             ),

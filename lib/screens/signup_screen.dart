@@ -72,7 +72,7 @@ class _SignupScreenState extends State<SignupScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Join Shop App',
+                  'Join FoodieExpress 🍽️',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -81,7 +81,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 ),
                 const SizedBox(height: 6),
                 const Text(
-                  'Fill in your details to create your account',
+                  'Create an account to start ordering',
                   style: TextStyle(
                     fontSize: 14,
                     color: AppColors.textSecondary,

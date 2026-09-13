@@ -1,5 +1,6 @@
 <?php
 require_once 'db.php';
+require_once 'menu_items.php';
 
 $user = getAuthUser($pdo);
 $userId = $user['id'];
@@ -8,32 +9,31 @@ $method = $_SERVER['REQUEST_METHOD'];
 // GET /api/cart
 if ($method === 'GET') {
     $stmt = $pdo->prepare("
-        SELECT c.id, c.product_id, c.color, c.size, c.quantity, p.name, p.price
+        SELECT c.id, c.menu_item_id, c.color, c.size, c.quantity, m.name, m.price
         FROM cart_items c
-        JOIN products p ON c.product_id = p.id
+        JOIN menu_items m ON c.menu_item_id = m.id
         WHERE c.user_id = ?
+        ORDER BY c.id DESC
     ");
     $stmt->execute([$userId]);
     $items = $stmt->fetchAll();
 
     foreach ($items as &$item) {
         $itemId = (int)$item['id'];
-        $prodId = (int)$item['product_id'];
+        $mId = (int)$item['menu_item_id'];
 
-        $imgStmt = $pdo->prepare("SELECT image_url FROM product_images WHERE product_id = ? LIMIT 1");
-        $imgStmt->execute([$prodId]);
-        $img = $imgStmt->fetchColumn() ?: '';
+        $menuStmt = $pdo->prepare("SELECT * FROM menu_items WHERE id = ?");
+        $menuStmt->execute([$mId]);
+        $menuItemData = $menuStmt->fetch();
+        $menuItem = $menuItemData ? formatMenuItem($pdo, $menuItemData) : null;
 
         $item['id'] = $itemId;
-        $item['product_id'] = $prodId;
+        $item['menu_item_id'] = $mId;
+        $item['product_id'] = $mId;
         $item['quantity'] = (int)$item['quantity'];
         $item['price'] = (float)$item['price'];
-        $item['product'] = [
-            'id' => $prodId,
-            'name' => $item['name'],
-            'price' => (float)$item['price'],
-            'product_images' => [['image_url' => $img]]
-        ];
+        $item['menu_item'] = $menuItem;
+        $item['product'] = $menuItem;
     }
     echo json_encode($items);
     exit();
@@ -42,37 +42,49 @@ if ($method === 'GET') {
 // POST /api/cart
 if ($method === 'POST') {
     $input = getJsonInput();
-    $productId = (int)($input['product_id'] ?? 0);
+    $menuItemId = (int)($input['menu_item_id'] ?? $input['product_id'] ?? 0);
     $color = $input['color'] ?? '';
     $size = $input['size'] ?? '';
     $quantity = (int)($input['quantity'] ?? 1);
 
-    $stmt = $pdo->prepare("INSERT INTO cart_items (user_id, product_id, color, size, quantity) VALUES (?, ?, ?, ?, ?)");
-    $stmt->execute([$userId, $productId, $color, $size, $quantity]);
-    $cartId = (int)$pdo->lastInsertId();
+    if ($menuItemId <= 0) {
+        http_response_code(422);
+        echo json_encode(['message' => 'Invalid food menu item ID']);
+        exit();
+    }
 
-    // Fetch inserted item with product
-    $prodStmt = $pdo->prepare("SELECT name, price FROM products WHERE id = ?");
-    $prodStmt->execute([$productId]);
-    $product = $prodStmt->fetch();
+    // Check if item already exists in cart for this user
+    $checkStmt = $pdo->prepare("SELECT id, quantity FROM cart_items WHERE user_id = ? AND menu_item_id = ?");
+    $checkStmt->execute([$userId, $menuItemId]);
+    $existing = $checkStmt->fetch();
 
-    $imgStmt = $pdo->prepare("SELECT image_url FROM product_images WHERE product_id = ? LIMIT 1");
-    $imgStmt->execute([$productId]);
-    $img = $imgStmt->fetchColumn() ?: '';
+    if ($existing) {
+        $newQty = (int)$existing['quantity'] + $quantity;
+        $updateStmt = $pdo->prepare("UPDATE cart_items SET quantity = ? WHERE id = ?");
+        $updateStmt->execute([$newQty, $existing['id']]);
+        $cartId = (int)$existing['id'];
+        $quantity = $newQty;
+    } else {
+        $stmt = $pdo->prepare("INSERT INTO cart_items (user_id, menu_item_id, color, size, quantity) VALUES (?, ?, ?, ?, ?)");
+        $stmt->execute([$userId, $menuItemId, $color, $size, $quantity]);
+        $cartId = (int)$pdo->lastInsertId();
+    }
+
+    $menuStmt = $pdo->prepare("SELECT * FROM menu_items WHERE id = ?");
+    $menuStmt->execute([$menuItemId]);
+    $menuItemData = $menuStmt->fetch();
+    $menuItem = $menuItemData ? formatMenuItem($pdo, $menuItemData) : null;
 
     echo json_encode([
         'id' => $cartId,
-        'product_id' => $productId,
+        'menu_item_id' => $menuItemId,
+        'product_id' => $menuItemId,
         'color' => $color,
         'size' => $size,
         'quantity' => $quantity,
-        'price' => (float)($product['price'] ?? 0),
-        'product' => [
-            'id' => $productId,
-            'name' => $product['name'] ?? '',
-            'price' => (float)($product['price'] ?? 0),
-            'product_images' => [['image_url' => $img]]
-        ]
+        'price' => (float)($menuItemData['price'] ?? 0),
+        'menu_item' => $menuItem,
+        'product' => $menuItem
     ]);
     exit();
 }

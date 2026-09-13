@@ -5,14 +5,8 @@ import '../utils/constants.dart';
 import 'login_screen.dart';
 import 'main_wrapper_screen.dart';
 
-/// Splash screen shown while the app checks whether a valid token is stored.
-///
-/// Flow:
-///   1. App starts → AuthProvider begins token validation in the background.
-///   2. SplashScreen shows logo + spinner.
-///   3. Once [AuthProvider.isLoading] becomes false we navigate accordingly.
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({Key? key}) : super(key: key);
+  const SplashScreen({super.key});
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -29,13 +23,13 @@ class _SplashScreenState extends State<SplashScreen>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 900),
+      duration: const Duration(milliseconds: 950),
     );
-    _scaleAnim = CurvedAnimation(parent: _controller, curve: Curves.elasticOut);
+    _scaleAnim =
+        CurvedAnimation(parent: _controller, curve: Curves.elasticOut);
     _fadeAnim = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
     _controller.forward();
 
-    // Listen for auth state changes and navigate when ready.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _listenForAuthReady();
     });
@@ -43,14 +37,10 @@ class _SplashScreenState extends State<SplashScreen>
 
   void _listenForAuthReady() {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-
-    // If already done (unlikely but possible) navigate immediately.
     if (!authProvider.isLoading) {
       _navigate(authProvider.isAuthenticated);
       return;
     }
-
-    // Otherwise wait for the loading to complete.
     authProvider.addListener(() {
       if (!authProvider.isLoading && mounted) {
         _navigate(authProvider.isAuthenticated);
@@ -82,57 +72,63 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.cardBackground,
+      backgroundColor: Colors.white,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // ── Animated Logo ──────────────────────────────────────────
+            // Animated restaurant logo
             ScaleTransition(
               scale: _scaleAnim,
               child: FadeTransition(
                 opacity: _fadeAnim,
                 child: Container(
-                  width: 110,
-                  height: 110,
+                  width: 120,
+                  height: 120,
                   decoration: BoxDecoration(
-                    color: AppColors.primary,
+                    gradient: RadialGradient(
+                      colors: [
+                        AppColors.primary.withValues(alpha: 0.9),
+                        AppColors.primary,
+                      ],
+                    ),
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.primary.withOpacity(0.35),
-                        blurRadius: 30,
-                        offset: const Offset(0, 12),
+                        color: AppColors.primary.withValues(alpha: 0.4),
+                        blurRadius: 35,
+                        offset: const Offset(0, 14),
                       ),
                     ],
                   ),
-                  child: const Icon(
-                    Icons.shopping_bag_rounded,
-                    size: 56,
-                    color: Colors.white,
+                  child: const Center(
+                    child: Text(
+                      '🍽️',
+                      style: TextStyle(fontSize: 52),
+                    ),
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 28),
+            const SizedBox(height: 32),
 
-            // ── App Name ───────────────────────────────────────────────
+            // App name & tagline
             FadeTransition(
               opacity: _fadeAnim,
               child: const Column(
                 children: [
                   Text(
-                    'Shop App',
+                    'FoodieExpress',
                     style: TextStyle(
-                      fontSize: 30,
+                      fontSize: 32,
                       fontWeight: FontWeight.bold,
                       color: AppColors.textPrimary,
-                      letterSpacing: 1.4,
+                      letterSpacing: 0.5,
                     ),
                   ),
-                  SizedBox(height: 6),
+                  SizedBox(height: 8),
                   Text(
-                    'Online Shopping Made Simple',
+                    'Delicious food, delivered fast 🚀',
                     style: TextStyle(
                       fontSize: 14,
                       color: AppColors.textSecondary,
@@ -142,13 +138,16 @@ class _SplashScreenState extends State<SplashScreen>
               ),
             ),
 
-            const SizedBox(height: 48),
+            const SizedBox(height: 60),
 
-            // ── Loading spinner ────────────────────────────────────────
-            const CircularProgressIndicator(
-              valueColor:
-                  AlwaysStoppedAnimation<Color>(AppColors.primary),
-              strokeWidth: 3,
+            // Spinner
+            const SizedBox(
+              width: 28,
+              height: 28,
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                strokeWidth: 3,
+              ),
             ),
           ],
         ),

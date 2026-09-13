@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../providers/category_provider.dart';
-import '../providers/product_provider.dart';
+import '../providers/menu_item_provider.dart';
 import '../providers/auth_provider.dart';
 import '../utils/constants.dart';
-import '../widgets/category_icon.dart';
-import '../widgets/product_card.dart';
+import '../widgets/category_pill.dart';
+import '../widgets/menu_item_card.dart';
 import '../widgets/shimmer_loading.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -23,24 +23,25 @@ class _HomeScreenState extends State<HomeScreen> {
   Timer? _bannerTimer;
   final TextEditingController _searchController = TextEditingController();
 
+  // Food-specific promotional banners
   final List<Map<String, String>> _banners = [
     {
-      'title': 'Summer Sale 50% OFF',
-      'subtitle': 'Explore vibrant trends & styles',
+      'title': 'Free Delivery Today! 🚀',
+      'subtitle': 'On orders above ৳500 — limited time offer',
       'image':
-          'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&q=80',
+          'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=900&q=80',
     },
     {
-      'title': 'Luxury Beauty Essentials',
-      'subtitle': 'Radiant skin care & cosmetics',
+      'title': 'Lunch Special 30% OFF 🍱',
+      'subtitle': 'Available 12 PM – 3 PM every day',
       'image':
-          'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=800&q=80',
+          'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=900&q=80',
     },
     {
-      'title': 'Exclusive Sneaker Drop',
-      'subtitle': 'Step into comfort & high speed',
+      'title': 'New! Sizzling Burgers 🍔',
+      'subtitle': 'Crafted with love, delivered hot',
       'image':
-          'https://images.unsplash.com/photo-1552346154-21d32810aba3?w=800&q=80',
+          'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=900&q=80',
     },
   ];
 
@@ -48,7 +49,6 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _startBannerTimer();
-    // Initial data fetch
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadData();
     });
@@ -56,13 +56,17 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadData({bool forceRefresh = false}) async {
     final catProv = context.read<CategoryProvider>();
-    final prodProv = context.read<ProductProvider>();
+    final menuProv = context.read<MenuItemProvider>();
+    final favProv = context.read<FavoriteProvider>();
+    final cartProv = context.read<CartProvider>();
 
     await Future.wait([
       catProv.fetchCategories(),
-      prodProv.fetchProducts(
+      menuProv.fetchMenuItems(
         categoryId: catProv.selectedCategoryId,
       ),
+      favProv.fetchFavorites(),
+      cartProv.fetchCart(),
     ]);
   }
 
@@ -72,7 +76,7 @@ class _HomeScreenState extends State<HomeScreen> {
         final nextIndex = (_currentBannerIndex + 1) % _banners.length;
         _bannerController.animateToPage(
           nextIndex,
-          duration: const Duration(milliseconds: 500),
+          duration: const Duration(milliseconds: 600),
           curve: Curves.easeInOut,
         );
       }
@@ -81,7 +85,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _onSearch(String query) async {
     final catProv = context.read<CategoryProvider>();
-    await context.read<ProductProvider>().fetchProducts(
+    await context.read<MenuItemProvider>().fetchMenuItems(
           categoryId: catProv.selectedCategoryId,
           search: query.trim().isEmpty ? null : query.trim(),
         );
@@ -90,7 +94,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _onCategoryTap(int index) async {
     final catProv = context.read<CategoryProvider>();
     catProv.selectCategory(index);
-    await context.read<ProductProvider>().fetchProducts(
+    await context.read<MenuItemProvider>().fetchMenuItems(
           categoryId: catProv.selectedCategoryId,
           search: _searchController.text.trim().isEmpty
               ? null
@@ -110,53 +114,75 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
     final categoryProvider = context.watch<CategoryProvider>();
-    final productProvider = context.watch<ProductProvider>();
+    final menuProvider = context.watch<MenuItemProvider>();
+
+    final greeting = _getGreeting();
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () => _loadData(forceRefresh: true),
           color: AppColors.primary,
           child: CustomScrollView(
             slivers: [
-              // ── Header ───────────────────────────────────────────────
+              // ── Header ─────────────────────────────────────────────
               SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Hello, ${authProvider.user?.name ?? 'Shopper'} 👋',
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary,
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '$greeting 👋',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: AppColors.textSecondary,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 2),
-                          const Text(
-                            'Discover your next favourite item',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: AppColors.textSecondary,
+                            const SizedBox(height: 2),
+                            Text(
+                              authProvider.user?.name ?? 'Food Lover',
+                              style: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textPrimary,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
+                      const SizedBox(width: 12),
                       Container(
-                        width: 42,
-                        height: 42,
-                        decoration: const BoxDecoration(
-                          color: AppColors.primaryLight,
+                        width: 46,
+                        height: 46,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              AppColors.primary,
+                              AppColors.primary.withRed(200),
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
                           shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primary.withOpacity(0.35),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            )
+                          ],
                         ),
                         child: const Icon(
-                          Icons.shopping_bag_rounded,
-                          color: AppColors.primary,
+                          Icons.restaurant_menu_rounded,
+                          color: Colors.white,
                           size: 22,
                         ),
                       ),
@@ -165,38 +191,57 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
 
-              // ── Search Bar ────────────────────────────────────────────
+              // ── Search Bar ──────────────────────────────────────────
               SliverToBoxAdapter(
                 child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: TextField(
-                    controller: _searchController,
-                    onChanged: _onSearch,
-                    decoration: InputDecoration(
-                      hintText: 'Search products...',
-                      prefixIcon: const Icon(Icons.search_rounded,
-                          color: AppColors.textSecondary),
-                      suffixIcon: _searchController.text.isNotEmpty
-                          ? IconButton(
-                              icon: const Icon(Icons.clear_rounded,
-                                  color: AppColors.textSecondary),
-                              onPressed: () {
-                                _searchController.clear();
-                                _onSearch('');
-                              },
-                            )
-                          : null,
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 3),
+                        )
+                      ],
+                    ),
+                    child: TextField(
+                      controller: _searchController,
+                      onChanged: _onSearch,
+                      decoration: InputDecoration(
+                        hintText: 'Search food, drinks...',
+                        hintStyle:
+                            const TextStyle(color: AppColors.textSecondary),
+                        prefixIcon: const Icon(Icons.search_rounded,
+                            color: AppColors.primary),
+                        suffixIcon: _searchController.text.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear_rounded,
+                                    color: AppColors.textSecondary, size: 18),
+                                onPressed: () {
+                                  _searchController.clear();
+                                  _onSearch('');
+                                  setState(() {});
+                                },
+                              )
+                            : null,
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(
+                            vertical: 14, horizontal: 4),
+                      ),
+                      onTap: () => setState(() {}),
                     ),
                   ),
                 ),
               ),
 
-              // ── Promotional Banner ─────────────────────────────────────
+              // ── Promotional Banner ──────────────────────────────────
               SliverToBoxAdapter(
                 child: Container(
-                  height: 160,
-                  margin: const EdgeInsets.symmetric(vertical: 12),
+                  height: 170,
+                  margin: const EdgeInsets.fromLTRB(0, 20, 0, 0),
                   child: Stack(
                     alignment: Alignment.bottomCenter,
                     children: [
@@ -209,19 +254,19 @@ class _HomeScreenState extends State<HomeScreen> {
                           final banner = _banners[index];
                           return Container(
                             margin:
-                                const EdgeInsets.symmetric(horizontal: 16),
+                                const EdgeInsets.symmetric(horizontal: 20),
                             decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(20),
+                              borderRadius: BorderRadius.circular(22),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.08),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 4),
+                                  color: Colors.black.withOpacity(0.12),
+                                  blurRadius: 14,
+                                  offset: const Offset(0, 6),
                                 ),
                               ],
                             ),
                             child: ClipRRect(
-                              borderRadius: BorderRadius.circular(20),
+                              borderRadius: BorderRadius.circular(22),
                               child: Stack(
                                 children: [
                                   CachedNetworkImage(
@@ -232,22 +277,24 @@ class _HomeScreenState extends State<HomeScreen> {
                                     placeholder: (_, __) => const ShimmerBox(
                                       width: double.infinity,
                                       height: double.infinity,
+                                      borderRadius: 0,
                                     ),
                                   ),
+                                  // Dark gradient overlay
                                   Container(
                                     decoration: BoxDecoration(
                                       gradient: LinearGradient(
                                         begin: Alignment.centerLeft,
                                         end: Alignment.centerRight,
                                         colors: [
-                                          Colors.black.withOpacity(0.7),
-                                          Colors.black.withOpacity(0.2),
+                                          Colors.black.withOpacity(0.68),
+                                          Colors.black.withOpacity(0.1),
                                         ],
                                       ),
                                     ),
                                   ),
                                   Padding(
-                                    padding: const EdgeInsets.all(20.0),
+                                    padding: const EdgeInsets.all(22),
                                     child: Column(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
@@ -258,8 +305,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                           banner['title']!,
                                           style: const TextStyle(
                                             color: Colors.white,
-                                            fontSize: 20,
+                                            fontSize: 19,
                                             fontWeight: FontWeight.bold,
+                                            height: 1.2,
                                           ),
                                         ),
                                         const SizedBox(height: 6),
@@ -267,7 +315,25 @@ class _HomeScreenState extends State<HomeScreen> {
                                           banner['subtitle']!,
                                           style: const TextStyle(
                                               color: Colors.white70,
-                                              fontSize: 13),
+                                              fontSize: 12),
+                                        ),
+                                        const SizedBox(height: 12),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 14, vertical: 6),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.primary,
+                                            borderRadius:
+                                                BorderRadius.circular(20),
+                                          ),
+                                          child: const Text(
+                                            'Order Now',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -278,7 +344,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           );
                         },
                       ),
-                      // Carousel Indicators
+                      // Carousel dots
                       Positioned(
                         bottom: 10,
                         child: Row(
@@ -287,13 +353,13 @@ class _HomeScreenState extends State<HomeScreen> {
                             (idx) => AnimatedContainer(
                               duration: const Duration(milliseconds: 300),
                               margin:
-                                  const EdgeInsets.symmetric(horizontal: 4),
-                              width: _currentBannerIndex == idx ? 20 : 7,
-                              height: 7,
+                                  const EdgeInsets.symmetric(horizontal: 3),
+                              width: _currentBannerIndex == idx ? 18 : 6,
+                              height: 6,
                               decoration: BoxDecoration(
                                 color: _currentBannerIndex == idx
-                                    ? AppColors.primary
-                                    : Colors.white.withOpacity(0.6),
+                                    ? Colors.white
+                                    : Colors.white.withOpacity(0.45),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                             ),
@@ -308,7 +374,7 @@ class _HomeScreenState extends State<HomeScreen> {
               // ── Categories Header ────────────────────────────────────
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                  padding: const EdgeInsets.fromLTRB(20, 22, 20, 10),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -321,39 +387,42 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       if (categoryProvider.selectedIndex != 0)
-                        TextButton(
-                          onPressed: () => _onCategoryTap(0),
-                          child: const Text('Reset',
-                              style: TextStyle(color: AppColors.primary)),
+                        GestureDetector(
+                          onTap: () => _onCategoryTap(0),
+                          child: const Text(
+                            'See All',
+                            style: TextStyle(
+                              color: AppColors.primary,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ),
                     ],
                   ),
                 ),
               ),
 
-              // ── Category Row ──────────────────────────────────────────
+              // ── Category Pills Row ───────────────────────────────────
               SliverToBoxAdapter(
                 child: SizedBox(
-                  height: 54,
+                  height: 42,
                   child: categoryProvider.isLoading
                       ? ListView.builder(
                           scrollDirection: Axis.horizontal,
-                          padding:
-                              const EdgeInsets.symmetric(horizontal: 16),
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
                           itemCount: 5,
                           itemBuilder: (_, __) => const Padding(
-                            padding: EdgeInsets.only(right: 12),
-                            child:
-                                ShimmerBox(width: 90, height: 44, borderRadius: 22),
+                            padding: EdgeInsets.only(right: 10),
+                            child: ShimmerBox(
+                                width: 90, height: 36, borderRadius: 20),
                           ),
                         )
                       : ListView(
                           scrollDirection: Axis.horizontal,
-                          padding:
-                              const EdgeInsets.symmetric(horizontal: 16),
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
                           children: [
-                            // "All" category
-                            CategoryIconWidget(
+                            CategoryPill(
                               isAll: true,
                               isSelected: categoryProvider.selectedIndex == 0,
                               onTap: () => _onCategoryTap(0),
@@ -363,10 +432,11 @@ class _HomeScreenState extends State<HomeScreen> {
                               (i) {
                                 final cat = categoryProvider.categories[i];
                                 final listIndex = i + 1;
-                                return CategoryIconWidget(
+                                return CategoryPill(
                                   category: cat,
-                                  isSelected: categoryProvider.selectedIndex ==
-                                      listIndex,
+                                  isSelected:
+                                      categoryProvider.selectedIndex ==
+                                          listIndex,
                                   onTap: () => _onCategoryTap(listIndex),
                                 );
                               },
@@ -376,17 +446,20 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
 
-              // ── Product Grid Header ────────────────────────────────────
+              // ── Menu Items Header ────────────────────────────────────
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
                         categoryProvider.selectedIndex == 0
-                            ? 'All Products'
-                            : '${categoryProvider.categories[categoryProvider.selectedIndex - 1].name} Products',
+                            ? 'All Menu Items'
+                            : categoryProvider
+                                .categories[
+                                    categoryProvider.selectedIndex - 1]
+                                .name,
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -394,7 +467,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       Text(
-                        '${productProvider.products.length} items',
+                        '${menuProvider.menuItems.length} items',
                         style: const TextStyle(
                             fontSize: 12, color: AppColors.textSecondary),
                       ),
@@ -403,10 +476,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
 
-              // ── Product Grid ───────────────────────────────────────────
-              if (productProvider.isLoading)
+              // ── Menu Items Grid ─────────────────────────────────────
+              if (menuProvider.isLoading)
                 SliverPadding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
                   sliver: SliverGrid(
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
@@ -417,51 +490,65 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     delegate: SliverChildBuilderDelegate(
                       (_, __) => const ShimmerBox(
-                          width: double.infinity, height: 200, borderRadius: 16),
+                          width: double.infinity,
+                          height: 220,
+                          borderRadius: 18),
                       childCount: 6,
                     ),
                   ),
                 )
-              else if (productProvider.error != null)
+              else if (menuProvider.error != null)
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.all(32.0),
+                    padding: const EdgeInsets.all(40),
                     child: Column(
                       children: [
                         Icon(Icons.wifi_off_rounded,
-                            size: 64, color: Colors.grey[400]),
-                        const SizedBox(height: 12),
+                            size: 64, color: Colors.grey[300]),
+                        const SizedBox(height: 16),
                         Text(
-                          productProvider.error!,
+                          menuProvider.error!,
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                               color: AppColors.textSecondary, fontSize: 14),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 20),
                         ElevatedButton.icon(
                           onPressed: _loadData,
                           icon: const Icon(Icons.refresh_rounded),
                           label: const Text('Retry'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
+                          ),
                         ),
                       ],
                     ),
                   ),
                 )
-              else if (productProvider.products.isEmpty)
+              else if (menuProvider.menuItems.isEmpty)
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.all(32.0),
+                    padding: const EdgeInsets.all(40),
                     child: Column(
                       children: [
-                        Icon(Icons.shopping_bag_outlined,
-                            size: 64, color: Colors.grey[400]),
-                        const SizedBox(height: 12),
+                        Icon(Icons.restaurant_menu_rounded,
+                            size: 64, color: Colors.grey[300]),
+                        const SizedBox(height: 16),
                         const Text(
-                          'No Products Found',
+                          'No Items Found',
                           style: TextStyle(
-                              fontSize: 16,
+                              fontSize: 17,
                               fontWeight: FontWeight.bold,
                               color: AppColors.textPrimary),
+                        ),
+                        const SizedBox(height: 6),
+                        const Text(
+                          'Try a different category or search term',
+                          style: TextStyle(
+                              color: AppColors.textSecondary, fontSize: 13),
                         ),
                       ],
                     ),
@@ -469,19 +556,19 @@ class _HomeScreenState extends State<HomeScreen> {
                 )
               else
                 SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
                   sliver: SliverGrid(
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
-                      childAspectRatio: 0.68,
+                      childAspectRatio: 0.70,
                       crossAxisSpacing: 14,
                       mainAxisSpacing: 14,
                     ),
                     delegate: SliverChildBuilderDelegate(
                       (context, index) =>
-                          ProductCard(product: productProvider.products[index]),
-                      childCount: productProvider.products.length,
+                          MenuItemCard(item: menuProvider.menuItems[index]),
+                      childCount: menuProvider.menuItems.length,
                     ),
                   ),
                 ),
@@ -490,5 +577,12 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
+  }
+
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return 'Good Morning';
+    if (hour < 17) return 'Good Afternoon';
+    return 'Good Evening';
   }
 }

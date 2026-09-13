@@ -41,8 +41,13 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('My Orders'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: Consumer<OrderProvider>(
         builder: (context, orderProvider, child) {
@@ -86,10 +91,10 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.history_rounded, size: 64, color: Colors.grey[400]),
+                  const Text('🍽️', style: TextStyle(fontSize: 64)),
                   const SizedBox(height: 16),
                   const Text(
-                    'No Orders Found',
+                    'No Orders Yet',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -98,7 +103,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    'When you place orders, they will appear here.',
+                    'Place your first food order today!',
                     style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
                   ),
                 ],

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/cart_provider.dart';
-import '../providers/wishlist_provider.dart';
+import '../providers/favorite_provider.dart';
 import '../providers/address_provider.dart';
 import '../widgets/bottom_nav_bar.dart';
 import 'home_screen.dart';
@@ -15,7 +15,7 @@ class MainWrapperScreen extends StatefulWidget {
 
   const MainWrapperScreen({
     Key? key,
-    this.initialIndex = 2, // Default to Home tab
+    this.initialIndex = 0, // Default to Home tab
   }) : super(key: key);
 
   @override
@@ -38,19 +38,19 @@ class _MainWrapperScreenState extends State<MainWrapperScreen> {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     if (authProvider.isLoggedIn) {
       Provider.of<CartProvider>(context, listen: false).fetchCart();
-      Provider.of<WishlistProvider>(context, listen: false).fetchWishlist();
+      Provider.of<FavoriteProvider>(context, listen: false).fetchFavorites();
       Provider.of<AddressProvider>(context, listen: false).fetchAddresses();
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    // 4 tabs: Home | Favourites | Cart | Profile
     final List<Widget> screens = [
-      const HomeScreen(),     // Index 0: Categories (Home)
-      const WishlistScreen(), // Index 1: Wishlist
-      const HomeScreen(),     // Index 2: Home (Center FAB)
-      const CartScreen(),     // Index 3: Cart
-      const ProfileScreen(),  // Index 4: Profile
+      const HomeScreen(),     // Index 0: Home
+      const WishlistScreen(), // Index 1: Favourites
+      const CartScreen(),     // Index 2: Cart
+      const ProfileScreen(),  // Index 3: Profile
     ];
 
     return Scaffold(
