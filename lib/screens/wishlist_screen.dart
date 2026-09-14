@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../models/menu_item_model.dart';
 import '../providers/favorite_provider.dart';
 import '../providers/menu_item_provider.dart';
 import '../utils/constants.dart';
-import '../widgets/menu_item_card.dart';
+import '../utils/price_formatter.dart';
 import '../widgets/shimmer_loading.dart';
+import 'food_detail_screen.dart';
 import 'main_wrapper_screen.dart';
 
 class WishlistScreen extends StatefulWidget {
@@ -47,100 +49,51 @@ class _WishlistScreenState extends State<WishlistScreen> {
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Header ──────────────────────────────────────────────
+            // ── Header: Centered Bold "Favorites" ────────────────────
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-              child: Row(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+              child: Stack(
+                alignment: Alignment.center,
                 children: [
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'My Favourites',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        SizedBox(height: 2),
-                        Text(
-                          'Your saved food items',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
+                  const Center(
+                    child: Text(
+                      'Favorites',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
                   ),
-                  // Refresh button
-                  IconButton(
-                    icon: const Icon(Icons.refresh_rounded,
-                        color: AppColors.primary),
-                    onPressed: () => favProv.fetchFavorites(),
-                  ),
-                  Container(
-                    width: 46,
-                    height: 46,
-                    decoration: const BoxDecoration(
-                      color: AppColors.primaryLight,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.favorite_rounded,
-                      color: AppColors.primary,
-                      size: 22,
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: IconButton(
+                      icon: const Icon(Icons.refresh_rounded,
+                          color: AppColors.primary),
+                      onPressed: () => favProv.fetchFavorites(),
+                      tooltip: 'Refresh',
                     ),
                   ),
                 ],
               ),
             ),
 
-            // ── Count chip ───────────────────────────────────────────
-            if (favourites.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 7),
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryLight,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    '${favourites.length} items saved',
-                    style: const TextStyle(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13,
-                    ),
-                  ),
-                ),
-              ),
-
-            const SizedBox(height: 16),
-
             // ── Content ──────────────────────────────────────────────
             Expanded(
               child: favProv.isLoading
-                  ? GridView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        childAspectRatio: 0.70,
-                        crossAxisSpacing: 14,
-                        mainAxisSpacing: 14,
-                      ),
-                      itemCount: 4,
-                      itemBuilder: (_, __) => const ShimmerBox(
+                  ? ListView.builder(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 8),
+                      itemCount: 5,
+                      itemBuilder: (_, __) => const Padding(
+                        padding: EdgeInsets.only(bottom: 14),
+                        child: ShimmerBox(
                           width: double.infinity,
-                          height: 220,
-                          borderRadius: 18),
+                          height: 96,
+                          borderRadius: 16,
+                        ),
+                      ),
                     )
                   : favProv.error != null && favourites.isEmpty
                       // ── Error state ───────────────────────────────
@@ -169,8 +122,8 @@ class _WishlistScreenState extends State<WishlistScreen> {
                                     backgroundColor: AppColors.primary,
                                     foregroundColor: Colors.white,
                                     shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(12)),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
                                   ),
                                 ),
                               ],
@@ -178,19 +131,47 @@ class _WishlistScreenState extends State<WishlistScreen> {
                           ),
                         )
                       : favourites.isEmpty
+                          // ── Empty state ───────────────────────────
                           ? _EmptyFavourites()
-                          : GridView.builder(
-                              padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-                              gridDelegate:
-                                  const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 2,
-                                childAspectRatio: 0.70,
-                                crossAxisSpacing: 14,
-                                mainAxisSpacing: 14,
+                          // ── Horizontal List Cards ─────────────────
+                          : RefreshIndicator(
+                              onRefresh: () => favProv.fetchFavorites(),
+                              color: AppColors.primary,
+                              child: ListView.builder(
+                                padding: const EdgeInsets.fromLTRB(
+                                    20, 8, 20, 24),
+                                itemCount: favourites.length,
+                                itemBuilder: (context, index) {
+                                  final item = favourites[index];
+                                  return _FavoriteCard(
+                                    item: item,
+                                    onRemove: () async {
+                                      await favProv.toggleFavorite(item.id,
+                                          menuItem: item);
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(context)
+                                            .hideCurrentSnackBar();
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                                '${item.name} removed from Favorites'),
+                                            behavior:
+                                                SnackBarBehavior.floating,
+                                            backgroundColor: AppColors.error,
+                                            duration:
+                                                const Duration(seconds: 2),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                    },
+                                  );
+                                },
                               ),
-                              itemCount: favourites.length,
-                              itemBuilder: (context, index) =>
-                                  MenuItemCard(item: favourites[index]),
                             ),
             ),
           ],
@@ -200,6 +181,167 @@ class _WishlistScreenState extends State<WishlistScreen> {
   }
 }
 
+// ── Horizontal List Card Widget ───────────────────────────────────────────────
+class _FavoriteCard extends StatelessWidget {
+  final MenuItemModel item;
+  final VoidCallback onRemove;
+
+  const _FavoriteCard({
+    required this.item,
+    required this.onRemove,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => FoodDetailScreen(item: item),
+              ),
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                // LEFT: Square product image (~76px)
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: SizedBox(
+                    width: 76,
+                    height: 76,
+                    child: CachedNetworkImage(
+                      imageUrl: item.imageUrl,
+                      fit: BoxFit.cover,
+                      placeholder: (_, __) => const ShimmerBox(
+                        width: 76,
+                        height: 76,
+                        borderRadius: 12,
+                      ),
+                      errorWidget: (_, __, ___) => Container(
+                        color: Colors.grey[100],
+                        child: const Icon(
+                          Icons.restaurant_rounded,
+                          color: Colors.grey,
+                          size: 32,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 14),
+
+                // MIDDLE: Product name + stats (Price • Rating)
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        item.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.local_offer_rounded,
+                            size: 13,
+                            color: AppColors.primary,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            PriceFormatter.format(item.price),
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                          const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 8),
+                            child: Text(
+                              '•',
+                              style: TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          const Icon(
+                            Icons.star_rounded,
+                            size: 15,
+                            color: AppColors.ratingStar,
+                          ),
+                          const SizedBox(width: 3),
+                          Text(
+                            item.rating.toStringAsFixed(1),
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
+                // RIGHT: Red circular delete button
+                GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: onRemove,
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: const BoxDecoration(
+                      color: AppColors.primaryLight,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.delete_outline_rounded,
+                      color: AppColors.primary,
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Empty State Widget ────────────────────────────────────────────────────────
 class _EmptyFavourites extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -208,55 +350,60 @@ class _EmptyFavourites extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            width: 100,
-            height: 100,
+            width: 88,
+            height: 88,
             decoration: const BoxDecoration(
               color: AppColors.primaryLight,
               shape: BoxShape.circle,
             ),
             child: const Icon(
               Icons.favorite_border_rounded,
-              size: 50,
+              size: 44,
               color: AppColors.primary,
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
           const Text(
-            'No Favourites Yet',
+            'No favorites yet',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
               color: AppColors.textPrimary,
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 50),
+            padding: EdgeInsets.symmetric(horizontal: 48),
             child: Text(
-              'Tap the heart on any food item to save it here',
-              style: TextStyle(
-                  fontSize: 14, color: AppColors.textSecondary, height: 1.4),
+              'Explore food items and tap the heart icon to add them here',
               textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: AppColors.textSecondary,
+                height: 1.4,
+              ),
             ),
           ),
-          const SizedBox(height: 28),
+          const SizedBox(height: 24),
           ElevatedButton.icon(
             onPressed: () {
               Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(
-                    builder: (_) => const MainWrapperScreen(initialIndex: 0)),
+                  builder: (_) => const MainWrapperScreen(initialIndex: 0),
+                ),
                 (route) => false,
               );
             },
-            icon: const Icon(Icons.restaurant_menu_rounded),
-            label: const Text('Explore Menu'),
+            icon: const Icon(Icons.restaurant_menu_rounded, size: 18),
+            label: const Text('Browse Products'),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14)),
+                borderRadius: BorderRadius.circular(14),
+              ),
               elevation: 0,
             ),
           ),
