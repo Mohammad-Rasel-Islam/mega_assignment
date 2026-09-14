@@ -64,6 +64,7 @@ class CartProvider with ChangeNotifier {
     required String size,
     int quantity = 1,
   }) async {
+    _error = null;
     try {
       final response = await _api.post(
         ApiEndpoints.cart,

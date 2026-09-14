@@ -34,10 +34,12 @@ class AddressProvider with ChangeNotifier {
     notifyListeners();
     try {
       final response = await _api.get(ApiEndpoints.addresses);
-      final list = response as List<dynamic>;
-      _addresses = list
-          .map((j) => AddressModel.fromJson(j as Map<String, dynamic>))
-          .toList();
+      if (response is List) {
+        _addresses = response
+            .whereType<Map>()
+            .map((j) => AddressModel.fromJson(Map<String, dynamic>.from(j)))
+            .toList();
+      }
     } catch (e) {
       _error = e is ApiException ? e.message : e.toString();
     } finally {
@@ -83,12 +85,17 @@ class AddressProvider with ChangeNotifier {
   /// POST /api/orders with the selected address ID.
   /// Returns the created order id on success, or null on failure.
   Future<int?> placeOrder(int addressId) async {
+    _error = null;
     try {
       final response = await _api.post(
         ApiEndpoints.orders,
         data: {'address_id': addressId},
       );
-      return (response as Map<String, dynamic>)['id'] as int?;
+      if (response is Map) {
+        final rawId = response['id'];
+        return int.tryParse(rawId?.toString() ?? '');
+      }
+      return null;
     } catch (e) {
       _error = e is ApiException ? e.message : e.toString();
       notifyListeners();
