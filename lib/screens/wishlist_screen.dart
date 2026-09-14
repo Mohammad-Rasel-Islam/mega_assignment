@@ -77,6 +77,12 @@ class _WishlistScreenState extends State<WishlistScreen> {
                       ],
                     ),
                   ),
+                  // Refresh button
+                  IconButton(
+                    icon: const Icon(Icons.refresh_rounded,
+                        color: AppColors.primary),
+                    onPressed: () => favProv.fetchFavorites(),
+                  ),
                   Container(
                     width: 46,
                     height: 46,
@@ -136,21 +142,56 @@ class _WishlistScreenState extends State<WishlistScreen> {
                           height: 220,
                           borderRadius: 18),
                     )
-                  : favourites.isEmpty
-                      ? _EmptyFavourites()
-                      : GridView.builder(
-                          padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            childAspectRatio: 0.70,
-                            crossAxisSpacing: 14,
-                            mainAxisSpacing: 14,
+                  : favProv.error != null && favourites.isEmpty
+                      // ── Error state ───────────────────────────────
+                      ? Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(32),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.wifi_off_rounded,
+                                    size: 64, color: Colors.grey[300]),
+                                const SizedBox(height: 16),
+                                Text(
+                                  favProv.error!,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                      color: AppColors.textSecondary,
+                                      fontSize: 14),
+                                ),
+                                const SizedBox(height: 20),
+                                ElevatedButton.icon(
+                                  onPressed: () => favProv.fetchFavorites(),
+                                  icon: const Icon(Icons.refresh_rounded),
+                                  label: const Text('Retry'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.primary,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(12)),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                          itemCount: favourites.length,
-                          itemBuilder: (context, index) =>
-                              MenuItemCard(item: favourites[index]),
-                        ),
+                        )
+                      : favourites.isEmpty
+                          ? _EmptyFavourites()
+                          : GridView.builder(
+                              padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                childAspectRatio: 0.70,
+                                crossAxisSpacing: 14,
+                                mainAxisSpacing: 14,
+                              ),
+                              itemCount: favourites.length,
+                              itemBuilder: (context, index) =>
+                                  MenuItemCard(item: favourites[index]),
+                            ),
             ),
           ],
         ),

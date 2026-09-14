@@ -39,55 +39,59 @@ function formatMenuItem($pdo, $item) {
     ];
 }
 
-// GET single item by ID
-if (isset($_GET['id'])) {
-    $id = (int)$_GET['id'];
-    $stmt = $pdo->prepare("SELECT * FROM menu_items WHERE id = ?");
-    $stmt->execute([$id]);
-    $item = $stmt->fetch();
-    if (!$item) {
-        http_response_code(404);
-        echo json_encode(['message' => 'Menu item not found']);
+// Only handle request if menu_items.php is requested directly
+if (realpath($_SERVER['SCRIPT_FILENAME']) === realpath(__FILE__)) {
+    // GET single item by ID
+    if (isset($_GET['id'])) {
+        $id = (int)$_GET['id'];
+        $stmt = $pdo->prepare("SELECT * FROM menu_items WHERE id = ?");
+        $stmt->execute([$id]);
+        $item = $stmt->fetch();
+        if (!$item) {
+            http_response_code(404);
+            echo json_encode(['message' => 'Menu item not found']);
+            exit();
+        }
+        echo json_encode(formatMenuItem($pdo, $item));
         exit();
     }
-    echo json_encode(formatMenuItem($pdo, $item));
+
+    // GET list with filters (category_id, search, is_popular)
+    $categoryId = $_GET['category_id'] ?? null;
+    $search = $_GET['search'] ?? null;
+    $isPopular = $_GET['is_popular'] ?? null;
+
+    $sql = "SELECT * FROM menu_items WHERE 1=1";
+    $params = [];
+
+    if ($categoryId && $categoryId !== 'all') {
+        $sql .= " AND category_id = ?";
+        $params[] = (int)$categoryId;
+    }
+
+    if ($search) {
+        $sql .= " AND (name LIKE ? OR description LIKE ?)";
+        $params[] = "%$search%";
+        $params[] = "%$search%";
+    }
+
+    if ($isPopular !== null) {
+        $sql .= " AND is_popular = ?";
+        $params[] = (int)$isPopular;
+    }
+
+    $sql .= " ORDER BY id ASC";
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    $items = $stmt->fetchAll();
+
+    $result = [];
+    foreach ($items as $item) {
+        $result[] = formatMenuItem($pdo, $item);
+    }
+
+    echo json_encode($result);
     exit();
 }
-
-// GET list with filters (category_id, search, is_popular)
-$categoryId = $_GET['category_id'] ?? null;
-$search = $_GET['search'] ?? null;
-$isPopular = $_GET['is_popular'] ?? null;
-
-$sql = "SELECT * FROM menu_items WHERE 1=1";
-$params = [];
-
-if ($categoryId && $categoryId !== 'all') {
-    $sql .= " AND category_id = ?";
-    $params[] = (int)$categoryId;
-}
-
-if ($search) {
-    $sql .= " AND (name LIKE ? OR description LIKE ?)";
-    $params[] = "%$search%";
-    $params[] = "%$search%";
-}
-
-if ($isPopular !== null) {
-    $sql .= " AND is_popular = ?";
-    $params[] = (int)$isPopular;
-}
-
-$sql .= " ORDER BY id ASC";
-
-$stmt = $pdo->prepare($sql);
-$stmt->execute($params);
-$items = $stmt->fetchAll();
-
-$result = [];
-foreach ($items as $item) {
-    $result[] = formatMenuItem($pdo, $item);
-}
-
-echo json_encode($result);
 ?>

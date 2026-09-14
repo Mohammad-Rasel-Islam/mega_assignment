@@ -56,11 +56,14 @@ class FavoriteProvider with ChangeNotifier {
   /// Toggle favorite status with optimistic update and full model preservation.
   Future<void> toggleFavorite(int menuItemId, {MenuItemModel? menuItem}) async {
     if (isFavorite(menuItemId)) {
+      // ── Un-favourite ──────────────────────────────────────────────────
       final existingItem = _items.firstWhere(
         (i) => i.menuItemId == menuItemId,
         orElse: () => FavoriteItemModel(id: 0, menuItemId: menuItemId, menuItem: menuItem),
       );
+      final existingIndex = _items.indexWhere((i) => i.menuItemId == menuItemId);
 
+      // Optimistic removal
       _favoriteIds.remove(menuItemId);
       _items.removeWhere((i) => i.menuItemId == menuItemId);
       notifyListeners();
@@ -68,13 +71,14 @@ class FavoriteProvider with ChangeNotifier {
       try {
         await _api.delete(ApiEndpoints.favoriteItem(menuItemId));
       } catch (e) {
-        if (existingItem.id != 0 || menuItem != null) {
-          _favoriteIds.add(menuItemId);
-          _items.add(existingItem);
-          notifyListeners();
-        }
+        // Rollback — always restore at original position
+        _favoriteIds.add(menuItemId);
+        final insertAt = existingIndex.clamp(0, _items.length);
+        _items.insert(insertAt, existingItem);
+        notifyListeners();
       }
     } else {
+      // ── Add to favourites ─────────────────────────────────────────────
       _favoriteIds.add(menuItemId);
       final tempFav = FavoriteItemModel(
         id: 0,
@@ -82,7 +86,8 @@ class FavoriteProvider with ChangeNotifier {
         menuItem: menuItem,
       );
       _items.removeWhere((i) => i.menuItemId == menuItemId);
-      _items.add(tempFav);
+      // Insert at top so newest favourites appear first
+      _items.insert(0, tempFav);
       notifyListeners();
 
       try {
@@ -93,13 +98,33 @@ class FavoriteProvider with ChangeNotifier {
             'product_id': menuItemId,
           },
         );
+
         if (response is Map) {
           final newItem = FavoriteItemModel.fromJson(Map<String, dynamic>.from(response));
           _items.removeWhere((i) => i.menuItemId == menuItemId);
-          _items.add(newItem.menuItem != null ? newItem : tempFav);
+
+          if (newItem.menuItem != null) {
+            // Server returned full embedded menu item — use it
+            _items.insert(0, newItem);
+            notifyListeners();
+          } else if (menuItem != null) {
+            // Server didn't embed the item but we have it from the caller
+            _items.insert(0, FavoriteItemModel(
+              id: newItem.id,
+              menuItemId: menuItemId,
+              menuItem: menuItem,
+            ));
+            notifyListeners();
+          } else {
+            // Nothing locally available — re-fetch to get full data for the grid
+            await fetchFavorites();
+          }
+        } else {
+          // Unexpected response shape — re-fetch for consistency
+          await fetchFavorites();
         }
-        notifyListeners();
       } catch (e) {
+        // Rollback optimistic add
         _favoriteIds.remove(menuItemId);
         _items.removeWhere((i) => i.menuItemId == menuItemId);
         notifyListeners();

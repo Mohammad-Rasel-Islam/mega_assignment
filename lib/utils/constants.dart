@@ -1,9 +1,17 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 // ─────────────────────────────────────────────
 // API Base URL — points to your XAMPP backend.
+// Automatically uses 10.0.2.2 for Android emulator, and localhost for Windows / Web / iOS.
 // ─────────────────────────────────────────────
-const String kBaseUrl = 'http://10.0.2.2/api';
+String get kBaseUrl {
+  if (kIsWeb) return 'http://localhost/api';
+  if (defaultTargetPlatform == TargetPlatform.android) {
+    return 'http://10.0.2.2/api';
+  }
+  return 'http://localhost/api';
+}
 
 // shared_preferences key for the auth token
 const String kTokenKey = 'auth_token';
