@@ -13,7 +13,7 @@ import '../widgets/shimmer_loading.dart';
 class FoodDetailScreen extends StatefulWidget {
   final MenuItemModel item;
 
-  const FoodDetailScreen({Key? key, required this.item}) : super(key: key);
+  const FoodDetailScreen({super.key, required this.item});
 
   @override
   State<FoodDetailScreen> createState() => _FoodDetailScreenState();
@@ -108,12 +108,12 @@ class _FoodDetailScreenState extends State<FoodDetailScreen>
                         child: CachedNetworkImage(
                           imageUrl: item.imageUrl,
                           fit: BoxFit.cover,
-                          placeholder: (_, __) => const ShimmerBox(
+                          placeholder: (_, _) => const ShimmerBox(
                             width: double.infinity,
                             height: 300,
                             borderRadius: 0,
                           ),
-                          errorWidget: (_, __, ___) => Container(
+                          errorWidget: (_, _, _) => Container(
                             color: Colors.grey[200],
                             child: const Center(
                               child: Icon(Icons.restaurant_rounded,
@@ -135,7 +135,7 @@ class _FoodDetailScreenState extends State<FoodDetailScreen>
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
                               colors: [
-                                Colors.black.withOpacity(0.45),
+                                Colors.black.withValues(alpha: 0.45),
                                 Colors.transparent,
                               ],
                             ),
@@ -226,7 +226,7 @@ class _FoodDetailScreenState extends State<FoodDetailScreen>
                                   horizontal: 10, vertical: 6),
                               decoration: BoxDecoration(
                                 color: AppColors.accentYellow
-                                    .withOpacity(0.12),
+                                    .withValues(alpha: 0.12),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Row(
@@ -293,7 +293,7 @@ class _FoodDetailScreenState extends State<FoodDetailScreen>
                             borderRadius: BorderRadius.circular(14),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.04),
+                                color: Colors.black.withValues(alpha: 0.04),
                                 blurRadius: 8,
                               )
                             ],
@@ -382,7 +382,7 @@ class _FoodDetailScreenState extends State<FoodDetailScreen>
               color: Colors.white,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.07),
+                  color: Colors.black.withValues(alpha: 0.07),
                   blurRadius: 12,
                   offset: const Offset(0, -4),
                 )
@@ -535,7 +535,7 @@ class _IngredientsTab extends StatelessWidget {
                             child: CachedNetworkImage(
                               imageUrl: ing.imageUrl,
                               fit: BoxFit.cover,
-                              errorWidget: (_, __, ___) => const Icon(
+                              errorWidget: (_, _, _) => const Icon(
                                 Icons.eco_rounded,
                                 color: AppColors.primary,
                                 size: 18,
@@ -591,7 +591,7 @@ class _CircleButton extends StatelessWidget {
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-                color: Colors.black.withOpacity(0.12), blurRadius: 8)
+                color: Colors.black.withValues(alpha: 0.12), blurRadius: 8)
           ],
         ),
         child: Center(child: child),
@@ -612,7 +612,7 @@ class _InfoChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(

@@ -11,11 +11,11 @@ class CartItemTile extends StatelessWidget {
   final VoidCallback onRemove;
 
   const CartItemTile({
-    Key? key,
+    super.key,
     required this.item,
     required this.onQuantityChanged,
     required this.onRemove,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -45,11 +45,11 @@ class CartItemTile extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.cardBackground,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: AppColors.primary.withValues(alpha: 0.06),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -66,9 +66,9 @@ class CartItemTile extends StatelessWidget {
                 child: CachedNetworkImage(
                   imageUrl: item.productImage,
                   fit: BoxFit.cover,
-                  placeholder: (_, __) =>
+                  placeholder: (_, _) =>
                       const ShimmerBox(width: 76, height: 76),
-                  errorWidget: (_, __, ___) => Container(
+                  errorWidget: (_, _, _) => Container(
                     color: Colors.grey[100],
                     child: const Icon(Icons.restaurant_rounded,
                         color: Colors.grey, size: 28),

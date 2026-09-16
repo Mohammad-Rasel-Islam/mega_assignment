@@ -11,12 +11,12 @@ class CategoryIconWidget extends StatelessWidget {
   final VoidCallback onTap;
 
   const CategoryIconWidget({
-    Key? key,
+    super.key,
     this.category,
     this.isAll = false,
     required this.isSelected,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +29,7 @@ class CategoryIconWidget extends StatelessWidget {
         margin: const EdgeInsets.only(right: 12),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.categorySelected : Colors.white,
+          color: isSelected ? AppColors.categorySelected : AppColors.cardBackground,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
             color: isSelected ? AppColors.categorySelectedBorder : AppColors.border,
@@ -38,7 +38,7 @@ class CategoryIconWidget extends StatelessWidget {
           boxShadow: [
             if (isSelected)
               BoxShadow(
-                color: AppColors.categorySelectedBorder.withOpacity(0.2),
+                color: AppColors.categorySelectedBorder.withValues(alpha: 0.2),
                 blurRadius: 6,
                 offset: const Offset(0, 2),
               ),
@@ -53,7 +53,7 @@ class CategoryIconWidget extends StatelessWidget {
               height: 32,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: isSelected ? AppColors.primary.withOpacity(0.1) : Colors.grey[100],
+                color: isSelected ? AppColors.primary.withValues(alpha: 0.1) : AppColors.primaryLight,
               ),
               child: ClipOval(
                 child: isAll

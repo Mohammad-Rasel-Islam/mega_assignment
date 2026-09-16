@@ -19,7 +19,7 @@ void main() {
 }
 
 class RestaurantApp extends StatelessWidget {
-  const RestaurantApp({Key? key}) : super(key: key);
+  const RestaurantApp({super.key});
 
   @override
   Widget build(BuildContext context) {

@@ -7,12 +7,12 @@ class ColorDotSelector extends StatelessWidget {
   final double dotSize;
 
   const ColorDotSelector({
-    Key? key,
+    super.key,
     required this.hexColors,
     this.selectedColor,
     this.onColorSelected,
     this.dotSize = 14.0,
-  }) : super(key: key);
+  });
 
   Color _parseColor(String hexString) {
     try {
@@ -50,7 +50,7 @@ class ColorDotSelector extends StatelessWidget {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
+                  color: Colors.black.withValues(alpha: 0.08),
                   blurRadius: 2,
                 ),
               ],

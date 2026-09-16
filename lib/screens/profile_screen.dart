@@ -55,7 +55,7 @@ class ProfileScreen extends StatelessWidget {
                                 ? CachedNetworkImage(
                                     imageUrl: user.photoUrl!,
                                     fit: BoxFit.cover,
-                                    errorWidget: (_, __, ___) => const Icon(
+                                    errorWidget: (_, _, _) => const Icon(
                                       Icons.person_rounded,
                                       size: 44,
                                       color: AppColors.primary,

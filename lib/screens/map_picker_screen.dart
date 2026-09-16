@@ -9,7 +9,7 @@ import '../widgets/custom_button.dart';
 /// Replaces the Google Maps picker so the app works without a Maps API key.
 /// The user simply types their address label and full address text.
 class MapPickerScreen extends StatefulWidget {
-  const MapPickerScreen({Key? key}) : super(key: key);
+  const MapPickerScreen({super.key});
 
   @override
   State<MapPickerScreen> createState() => _MapPickerScreenState();

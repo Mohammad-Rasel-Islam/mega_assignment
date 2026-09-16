@@ -11,7 +11,7 @@ import 'food_detail_screen.dart';
 import 'main_wrapper_screen.dart';
 
 class WishlistScreen extends StatefulWidget {
-  const WishlistScreen({Key? key}) : super(key: key);
+  const WishlistScreen({super.key});
 
   @override
   State<WishlistScreen> createState() => _WishlistScreenState();
@@ -86,7 +86,7 @@ class _WishlistScreenState extends State<WishlistScreen> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 20, vertical: 8),
                       itemCount: 5,
-                      itemBuilder: (_, __) => const Padding(
+                      itemBuilder: (_, _) => const Padding(
                         padding: EdgeInsets.only(bottom: 14),
                         child: ShimmerBox(
                           width: double.infinity,
@@ -196,11 +196,11 @@ class _FavoriteCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: AppColors.primary.withValues(alpha: 0.06),
             blurRadius: 10,
             offset: const Offset(0, 3),
           ),
@@ -232,12 +232,12 @@ class _FavoriteCard extends StatelessWidget {
                     child: CachedNetworkImage(
                       imageUrl: item.imageUrl,
                       fit: BoxFit.cover,
-                      placeholder: (_, __) => const ShimmerBox(
+                      placeholder: (_, _) => const ShimmerBox(
                         width: 76,
                         height: 76,
                         borderRadius: 12,
                       ),
-                      errorWidget: (_, __, ___) => Container(
+                      errorWidget: (_, _, _) => Container(
                         color: Colors.grey[100],
                         child: const Icon(
                           Icons.restaurant_rounded,

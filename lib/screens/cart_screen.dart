@@ -9,7 +9,7 @@ import '../widgets/custom_button.dart';
 import 'checkout_screen.dart';
 
 class CartScreen extends StatefulWidget {
-  const CartScreen({Key? key}) : super(key: key);
+  const CartScreen({super.key});
 
   @override
   State<CartScreen> createState() => _CartScreenState();
@@ -51,7 +51,7 @@ class _CartScreenState extends State<CartScreen> {
                 child: ListView.builder(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   itemCount: 3,
-                  itemBuilder: (_, __) => const Padding(
+                  itemBuilder: (_, _) => const Padding(
                     padding: EdgeInsets.only(bottom: 12),
                     child: ShimmerBox(
                         width: double.infinity, height: 90, borderRadius: 16),
@@ -198,7 +198,7 @@ class _CartScreenState extends State<CartScreen> {
                                 top: Radius.circular(24)),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.06),
+                                color: Colors.black.withValues(alpha: 0.06),
                                 blurRadius: 14,
                                 offset: const Offset(0, -4),
                               ),

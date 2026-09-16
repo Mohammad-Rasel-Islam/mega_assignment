@@ -25,12 +25,12 @@ class CategoryPill extends StatelessWidget {
   final VoidCallback onTap;
 
   const CategoryPill({
-    Key? key,
+    super.key,
     this.category,
     this.isAll = false,
     required this.isSelected,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +44,7 @@ class CategoryPill extends StatelessWidget {
         margin: const EdgeInsets.only(right: 10),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : Colors.white,
+          color: isSelected ? AppColors.primary : AppColors.cardBackground,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
             color: isSelected ? AppColors.primary : AppColors.border,
@@ -53,7 +53,7 @@ class CategoryPill extends StatelessWidget {
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(0.25),
+                    color: AppColors.primary.withValues(alpha: 0.25),
                     blurRadius: 8,
                     offset: const Offset(0, 3),
                   )

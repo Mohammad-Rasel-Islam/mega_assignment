@@ -12,7 +12,7 @@ import '../screens/food_detail_screen.dart';
 class MenuItemCard extends StatelessWidget {
   final MenuItemModel item;
 
-  const MenuItemCard({Key? key, required this.item}) : super(key: key);
+  const MenuItemCard({super.key, required this.item});
 
   @override
   Widget build(BuildContext context) {
@@ -31,11 +31,11 @@ class MenuItemCard extends StatelessWidget {
           },
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.cardBackground,
               borderRadius: BorderRadius.circular(18),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.06),
+                  color: AppColors.primary.withValues(alpha: 0.08),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
@@ -55,12 +55,12 @@ class MenuItemCard extends StatelessWidget {
                         child: CachedNetworkImage(
                           imageUrl: item.imageUrl,
                           fit: BoxFit.cover,
-                          placeholder: (_, __) => const ShimmerBox(
+                          placeholder: (_, _) => const ShimmerBox(
                             width: double.infinity,
                             height: double.infinity,
                             borderRadius: 0,
                           ),
-                          errorWidget: (_, __, ___) => Container(
+                          errorWidget: (_, _, _) => Container(
                             color: Colors.grey[100],
                             child: const Center(
                               child: Icon(Icons.restaurant_rounded,
@@ -82,11 +82,11 @@ class MenuItemCard extends StatelessWidget {
                           width: 36,
                           height: 36,
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: isFav ? AppColors.primaryLight : AppColors.cardBackground,
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.12),
+                                color: AppColors.primary.withValues(alpha: 0.15),
                                 blurRadius: 6,
                               )
                             ],
@@ -98,7 +98,7 @@ class MenuItemCard extends StatelessWidget {
                             size: 16,
                             color: isFav
                                 ? AppColors.primary
-                                : Colors.grey[500],
+                                : AppColors.textSecondary,
                           ),
                         ),
                       ),
@@ -112,7 +112,7 @@ class MenuItemCard extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 7, vertical: 3),
                         decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.55),
+                          color: Colors.black.withValues(alpha: 0.55),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Row(

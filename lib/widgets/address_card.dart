@@ -8,11 +8,11 @@ class AddressCard extends StatelessWidget {
   final VoidCallback onTap;
 
   const AddressCard({
-    Key? key,
+    super.key,
     required this.address,
     required this.isSelected,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +31,7 @@ class AddressCard extends StatelessWidget {
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -44,7 +44,7 @@ class AddressCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: isSelected ? AppColors.primary.withOpacity(0.1) : Colors.grey[100],
+                color: isSelected ? AppColors.primary.withValues(alpha: 0.1) : AppColors.primaryLight,
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -104,12 +104,22 @@ class AddressCard extends StatelessWidget {
               ),
             ),
 
-            // Radio Button Indicator
-            Radio<bool>(
-              value: true,
-              groupValue: isSelected,
-              onChanged: (_) => onTap(),
-              activeColor: AppColors.primary,
+            // Selection Indicator
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: 22,
+              height: 22,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isSelected ? AppColors.primary : Colors.transparent,
+                border: Border.all(
+                  color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                  width: 2,
+                ),
+              ),
+              child: isSelected
+                  ? const Icon(Icons.check, size: 14, color: Colors.white)
+                  : null,
             ),
           ],
         ),

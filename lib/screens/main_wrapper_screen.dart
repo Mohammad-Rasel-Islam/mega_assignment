@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/auth_provider.dart';
 import '../providers/cart_provider.dart';
 import '../providers/favorite_provider.dart';
 import '../providers/address_provider.dart';
@@ -14,9 +13,9 @@ class MainWrapperScreen extends StatefulWidget {
   final int initialIndex;
 
   const MainWrapperScreen({
-    Key? key,
+    super.key,
     this.initialIndex = 0, // Default to Home tab
-  }) : super(key: key);
+  });
 
   @override
   State<MainWrapperScreen> createState() => _MainWrapperScreenState();
@@ -35,12 +34,9 @@ class _MainWrapperScreenState extends State<MainWrapperScreen> {
   }
 
   void _initUserProviders() {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    if (authProvider.isLoggedIn) {
-      Provider.of<CartProvider>(context, listen: false).fetchCart();
-      Provider.of<FavoriteProvider>(context, listen: false).fetchFavorites();
-      Provider.of<AddressProvider>(context, listen: false).fetchAddresses();
-    }
+    Provider.of<CartProvider>(context, listen: false).fetchCart();
+    Provider.of<FavoriteProvider>(context, listen: false).fetchFavorites();
+    Provider.of<AddressProvider>(context, listen: false).fetchAddresses();
   }
 
   @override

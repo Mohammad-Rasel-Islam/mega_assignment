@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../providers/auth_provider.dart';
 import '../utils/constants.dart';
-import 'login_screen.dart';
 import 'main_wrapper_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -30,33 +27,19 @@ class _SplashScreenState extends State<SplashScreen>
     _fadeAnim = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
     _controller.forward();
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _listenForAuthReady();
+    // Navigate directly to main screen after splash animation
+    Future.delayed(const Duration(milliseconds: 1400), () {
+      if (mounted) _navigate();
     });
   }
 
-  void _listenForAuthReady() {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    if (!authProvider.isLoading) {
-      _navigate(authProvider.isAuthenticated);
-      return;
-    }
-    authProvider.addListener(() {
-      if (!authProvider.isLoading && mounted) {
-        _navigate(authProvider.isAuthenticated);
-      }
-    });
-  }
-
-  void _navigate(bool isAuthenticated) {
+  void _navigate() {
     if (!mounted) return;
     Navigator.pushReplacement(
       context,
       PageRouteBuilder(
-        pageBuilder: (_, __, ___) => isAuthenticated
-            ? const MainWrapperScreen()
-            : const LoginScreen(),
-        transitionsBuilder: (_, anim, __, child) =>
+        pageBuilder: (_, _, _) => const MainWrapperScreen(),
+        transitionsBuilder: (_, anim, _, child) =>
             FadeTransition(opacity: anim, child: child),
         transitionDuration: const Duration(milliseconds: 400),
       ),
@@ -69,10 +52,11 @@ class _SplashScreenState extends State<SplashScreen>
     super.dispose();
   }
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.background,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
